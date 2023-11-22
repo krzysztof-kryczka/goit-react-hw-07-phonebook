@@ -1,26 +1,62 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { nanoid } from 'nanoid';
+import { getContacts, addContact, deleteContact } from 'redux/services/api';
 
-const initialContacts = JSON.parse(localStorage.getItem('contacts')) ?? [
-  { id: nanoid(), name: 'Rosie Simpson', number: '459-12-56' },
-  { id: nanoid(), name: 'Hermione Kline', number: '443-89-12' },
-  { id: nanoid(), name: 'Eden Clements', number: '645-17-79' },
-  { id: nanoid(), name: 'Annie Copeland', number: '227-91-26' },
-];
+const initialContacts = {
+  items: [],
+  isLoading: false,
+  error: null,
+  status: 'idle',
+};
 
 const contactSlice = createSlice({
   name: 'contact',
   initialState: initialContacts,
-  reducers: {
-    addContact(state, action) {
-      state.push(action.payload);
-    },
-    deleteContact(state, action) {
-      const index = state.findIndex(contact => contact.id === action.payload);
-      state.splice(index, 1);
-    },
+
+  extraReducers: builder => {
+    builder
+      // getContacts
+      .addCase(getContacts.pending, state => {
+        state.status = 'pending';
+      })
+      .addCase(getContacts.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.error = null;
+        state.items = action.payload;
+      })
+      .addCase(getContacts.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      })
+
+      // addContact
+      .addCase(addContact.pending, state => {
+        state.status = 'pending';
+      })
+      .addCase(addContact.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = [...state.items, action.payload];
+      })
+      .addCase(addContact.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      })
+
+      // deleteContact
+      .addCase(deleteContact.pending, state => {
+        state.status = 'pending';
+      })
+      .addCase(deleteContact.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items.splice(
+          state.items.findIndex(contact => contact.id === action.payload.id),
+          1
+        );
+      })
+      .addCase(deleteContact.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      });
   },
 });
 
-export const { addContact, deleteContact } = contactSlice.actions;
 export const contactReducer = contactSlice.reducer;
