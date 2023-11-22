@@ -1,33 +1,39 @@
 import { useSelector, useDispatch } from 'react-redux';
 import css from './ContactList.module.css';
-import { deleteContact } from 'redux/contactSlice';
+import { deleteContact } from '#services/api';
+
 export const ContactList = () => {
   const dispatch = useDispatch();
 
-  const contacts = useSelector(state => state.contacts);
+  const contacts = useSelector(state => state.contacts.items);
   const filterValue = useSelector(state => state.filter.status);
+  const error = useSelector(state => state.contacts.error);
 
-  const filterContact = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(filterValue.toLowerCase())
+  const filterContact = contacts?.filter(contact =>
+    contact.name.toLowerCase().includes(filterValue?.toLowerCase())
   );
 
   return (
     <div className={css.contacts}>
       <h2>Contacts</h2>
-      <ul className={css.contacts__list}>
-        {filterContact.map(contact => (
-          <li className={css.contacts__item} key={contact.id}>
-            {contact.name} : {contact.number}{' '}
-            <button
-              className={css.contacts__btn}
-              id={contact.id}
-              onClick={() => dispatch(deleteContact(contact.id))}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+      {filterContact?.length > 0 ? (
+        <ul className={css.contacts__list}>
+          {filterContact?.map(({ id, name, number }) => (
+            <li className={css.contacts__item} key={id}>
+              {name} : {number}
+              <button
+                className={css.contacts__btn}
+                id={id}
+                onClick={() => dispatch(deleteContact(id))}
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        (error && <p>Error: {error}</p>) || <p>No contacts in phoneBook</p>
+      )}
     </div>
   );
 };
